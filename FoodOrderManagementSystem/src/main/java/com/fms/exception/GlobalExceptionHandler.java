@@ -6,11 +6,11 @@ import java.util.stream.Collectors;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
-import org.springframework.web.ErrorResponse;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import com.fms.dto.ErrorResponse;
 import com.fms.dto.ErrorResponse.FieldValidationError;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -58,22 +58,41 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(body);
     }
 
-    // ── 3. Malformed JSON body ─────────────────────────────────────────────
+    // ── 3. Invalid status transition ───────────────────────────────────────
+    @ExceptionHandler(InvalidStatusTransitionException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidTransition(
+            InvalidStatusTransitionException ex,
+            HttpServletRequest request) {
+
+        ErrorResponse body = new ErrorResponse(
+                HttpStatus.CONFLICT.value(),
+                "Invalid Status Transition",
+                ex.getMessage(),
+                request.getRequestURI());
+
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(body);
+    }
+
+    // ── 4. Malformed JSON / Invalid Enum ───────────────────────────────────
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<ErrorResponse> handleUnreadableMessage(
             HttpMessageNotReadableException ex,
             HttpServletRequest request) {
 
+        String message = (ex.getMessage() != null && ex.getMessage().contains("OrderStatus"))
+                ? "Invalid status value. Allowed: PENDING, CONFIRMED, PREPARING, DELIVERED, CANCELLED"
+                : "Request body is missing or cannot be parsed";
+
         ErrorResponse body = new ErrorResponse(
                 HttpStatus.BAD_REQUEST.value(),
-                "Malformed JSON",
-                "Request body is missing or cannot be parsed",
+                "Malformed Request",
+                message,
                 request.getRequestURI());
 
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(body);
     }
 
-    // ── 4. Catch-all for unexpected errors ─────────────────────────────────
+    // ── 5. Catch-all for unexpected errors ─────────────────────────────────
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleAllOtherErrors(
             Exception ex,
@@ -87,42 +106,4 @@ public class GlobalExceptionHandler {
 
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(body);
     }
-    
-    
-    
- // Add these two methods inside your existing GlobalExceptionHandler class
-
- // Invalid status transition (e.g. DELIVERED → PENDING)
- @ExceptionHandler(InvalidStatusTransitionException.class)
- public ResponseEntity<ErrorResponse> handleInvalidTransition(
-         InvalidStatusTransitionException ex,
-         HttpServletRequest request) {
-
-     ErrorResponse body = new ErrorResponse(
-             HttpStatus.CONFLICT.value(),
-             "Invalid Status Transition",
-             ex.getMessage(),
-             request.getRequestURI());
-
-     return ResponseEntity.status(HttpStatus.CONFLICT).body(body);
- }
-
- // Bad enum value in request body (e.g. "status": "SHIPPED")
- @ExceptionHandler(HttpMessageNotReadableException.class)
- public ResponseEntity<ErrorResponse> handleUnreadableMessage(
-         HttpMessageNotReadableException ex,
-         HttpServletRequest request) {
-
-     String message = ex.getMessage() != null && ex.getMessage().contains("OrderStatus")
-             ? "Invalid status value. Allowed: PENDING, CONFIRMED, PREPARING, DELIVERED, CANCELLED"
-             : "Request body is missing or cannot be parsed";
-
-     ErrorResponse body = new ErrorResponse(
-             HttpStatus.BAD_REQUEST.value(),
-             "Malformed Request",
-             message,
-             request.getRequestURI());
-
-     return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(body);
- }
 }

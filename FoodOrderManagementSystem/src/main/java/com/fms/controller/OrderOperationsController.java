@@ -33,6 +33,7 @@ import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/orders")
+@CrossOrigin(origins = "https://incredible-melba-7d58be.netlify.app/")
 @Tag(name = "Order Operations", description = "Create, retrieve, update and delete food orders")
 public class OrderOperationsController {
 

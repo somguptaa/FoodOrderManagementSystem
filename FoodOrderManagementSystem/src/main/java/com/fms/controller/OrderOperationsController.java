@@ -5,7 +5,6 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -34,7 +33,6 @@ import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/orders")
-@CrossOrigin(origins = "https://foodmanagementsys.netlify.app/")
 @Tag(name = "Order Operations", description = "Create, retrieve, update and delete food orders")
 public class OrderOperationsController {
 
